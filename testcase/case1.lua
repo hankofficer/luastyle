@@ -2,7 +2,7 @@
 -- test2
 
 function what()  
-local x=1,y= 3   
+local x,y= 2,        3           
    end         
 
    while false do                   
