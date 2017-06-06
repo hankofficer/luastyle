@@ -20,10 +20,110 @@
   SOFTWARE.
 ]]
 
-function stylizeLuaCode(luaChunk)
-  local stylizedLuaChunk = luaChunk
+-- configuration
+g_remove_leading_space = true
+g_remove_trailing_space = true
+g_reintent = true
+g_intent_word = '  '
 
-  return stylizedLuaChunk
+-- Remove all leading spaces in a line
+function removeLeadSpace(line)
+  local newLine = line:match('^%s*(.+)')
+  if newLine == nil then
+    newLine = ''
+  end
+  return newLine
+end
+
+-- Remove all trailing spaces in a line
+function removeTrailSpace(line)
+  local newLine = line:match('(.-)%s*$')
+  if newLine == nil then
+    newLine = ''
+  end
+  return newLine
+end
+
+-- Detect how many clauses in a single line
+function numOfClause(line)
+  local clauseList = {
+    {'then', 'elseif'},
+    {'then', 'else'},
+    {'then', 'end'},
+    {'do', 'end'}
+  }
+  local count = 0
+
+  for _, clausePair in ipairs(clauseList) do
+    local reg = clausePair[1]..'(.-)'..clausePair[2]
+    if string.match(line, reg) then
+      count = count + 1
+    end
+  end
+
+  return count
+end
+
+-- Detect intention changes
+function intent(line)
+  local currentIntent = 0
+  local laterIntent = 0
+  local keywordList = {
+    --keywords    = {current, later}
+    ['function']  = { 0, 1},
+    ['if']        = { 0, 1},
+    ['elseif']    = {-1, 1},
+    ['else']      = {-1, 1},
+    ['for']       = { 0, 1},
+    ['while']     = { 0, 1},
+    ['end']       = {-1, 0},
+  }
+
+  for keyword, diff in pairs(keywordList) do
+    if string.match(line, keyword) then
+      currentIntent = currentIntent + diff[1]
+      laterIntent = laterIntent + diff[2]
+    end
+  end
+
+  local n = numOfClause(line)
+  currentIntent = currentIntent + n
+  laterIntent = laterIntent - n
+
+  return currentIntent, laterIntent
+end
+
+function stylizeLuaCode(luaChunk)
+  local stylized = luaChunk
+  local stylizedTbl = {}
+  local intentLevel = 0
+
+  for line in string.gmatch(luaChunk..'\n', "([^\n]*)\n") do
+    if g_remove_leading_space then
+      line = removeLeadSpace(line)
+    end
+
+    if g_remove_trailing_space then
+      line = removeTrailSpace(line)
+    end
+    
+    local currentIntent, laterIntent = intent(line)
+
+    intentLevel = intentLevel + currentIntent
+
+    if g_reintent then
+      for i=1,intentLevel do
+        line = g_intent_word..line
+      end
+    end
+
+    line = line..'\n'
+    table.insert(stylizedTbl, line)
+
+    intentLevel = intentLevel + laterIntent
+  end
+
+  return table.concat(stylizedTbl)
 end
 
 function stylizeLuaFile(filename)
