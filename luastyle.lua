@@ -29,7 +29,9 @@ g_intent_word = '  '
 -- parameter for development
 g_debug = false
 
--- Remove all leading spaces in a line
+--[[
+  Remove all leading spaces in a line
+--]]
 function removeLeadSpace(line)
   local newLine = line:match('^%s*(.+)')
   if newLine == nil then
@@ -38,7 +40,9 @@ function removeLeadSpace(line)
   return newLine
 end
 
--- Remove all trailing spaces in a line
+--[[
+  Remove all trailing spaces in a line
+--]]
 function removeTrailSpace(line)
   local newLine = line:match('(.-)%s*$')
   if newLine == nil then
@@ -47,7 +51,9 @@ function removeTrailSpace(line)
   return newLine
 end
 
--- Detect how many clauses in a single line
+--[[
+  Detect how many clauses in a single line
+--]]
 function numOfClause(line)
   local clauseList = {
     {'then', 'elseif'},
@@ -68,7 +74,9 @@ function numOfClause(line)
   return count
 end
 
--- Detect intention changes
+--[[
+  Detect intention changes
+--]]
 function intent(line)
   local currentIntent = 0
   local laterIntent = 0
@@ -99,7 +107,9 @@ function intent(line)
   return currentIntent, laterIntent
 end
 
--- Stylize Lua script line by line
+--[[
+  Stylize Lua script line by line
+--]]
 function stylizeLuaCode(luaChunk)
   local stylized = luaChunk
   local stylizedTbl = {}
@@ -143,7 +153,9 @@ function stylizeLuaCode(luaChunk)
   end
 end
 
--- Stylize a Lua script
+--[[
+  Stylize a Lua script
+--]] 
 function stylizeLuaFile(filename)
   local file = io.open(filename, 'r')
   if not file then
@@ -159,10 +171,27 @@ function stylizeLuaFile(filename)
   file:close()
 end
 
--- Main script
-if #arg == 0 then
-  -- TODO: display help
+--[[
+  Display help
+--]] 
+function displayHelp()
+  print('usage: '..arg[0]..' [options] [file_names]')
+  print('    -h    Display this help message.')
+end
 
+--[[
+  Main script
+--]]
+if #arg == 0 then
+  displayHelp()
+  return
+end
+
+for _,v in pairs(arg) do
+  if v == '-h' then
+    displayHelp()
+    return
+  end
 end
 
 -- Go through every Lua file, well, assuming they are Lua file.
