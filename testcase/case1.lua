@@ -22,3 +22,8 @@ local a
   else
   mc2 = 3
 end
+
+myTest = 10
+repeat
+             myTest =myTest -1
+  until myTest == 0
