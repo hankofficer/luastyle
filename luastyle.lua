@@ -26,6 +26,9 @@ g_remove_trailing_space = true
 g_reintent = true
 g_intent_word = '  '
 
+-- parameter for development
+g_debug = false
+
 -- Remove all leading spaces in a line
 function removeLeadSpace(line)
   local newLine = line:match('^%s*(.+)')
@@ -50,7 +53,8 @@ function numOfClause(line)
     {'then', 'elseif'},
     {'then', 'else'},
     {'then', 'end'},
-    {'do', 'end'}
+    {'do', 'end'},
+    {'repeat', 'until'}
   }
   local count = 0
 
@@ -77,6 +81,8 @@ function intent(line)
     ['for']       = { 0, 1},
     ['while']     = { 0, 1},
     ['end']       = {-1, 0},
+    ['repeat']    = { 0, 1},
+    ['until']     = {-1, 0},
   }
 
   for keyword, diff in pairs(keywordList) do
@@ -93,6 +99,7 @@ function intent(line)
   return currentIntent, laterIntent
 end
 
+-- Stylize Lua script line by line
 function stylizeLuaCode(luaChunk)
   local stylized = luaChunk
   local stylizedTbl = {}
@@ -116,16 +123,27 @@ function stylizeLuaCode(luaChunk)
         line = g_intent_word..line
       end
     end
-
+    
+    if g_debug then
+      line = string.format('%d %d %d\t%s',
+                           intentLevel, currentIntent, 
+                           laterIntent, line)
+    end
     line = line..'\n'
     table.insert(stylizedTbl, line)
 
     intentLevel = intentLevel + laterIntent
   end
 
-  return table.concat(stylizedTbl)
+  if g_debug then
+    print(table.concat(stylizedTbl))
+    return luaChunk
+  else
+    return table.concat(stylizedTbl)
+  end
 end
 
+-- Stylize a Lua script
 function stylizeLuaFile(filename)
   local file = io.open(filename, 'r')
   if not file then
@@ -141,6 +159,13 @@ function stylizeLuaFile(filename)
   file:close()
 end
 
+-- Main script
+if #arg == 0 then
+  -- TODO: display help
+
+end
+
+-- Go through every Lua file, well, assuming they are Lua file.
 for i=1,#arg do
   stylizeLuaFile(arg[i])
 end
