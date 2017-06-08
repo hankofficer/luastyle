@@ -1,6 +1,10 @@
 --test
 -- test2
 
+b=a==3 or --[[some,1+- comment,2]] c~=6
+b =a==3 or c~=6 --some comment,1
+a=4 --[[somethi,ng,]]or {2,3} --some,thin,g--s,ome--[[hey]]
+
 function what()  
 local x,y= 2,        3           
    end         
