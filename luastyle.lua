@@ -24,6 +24,7 @@
 g_remove_leading_space = true
 g_remove_trailing_space = true
 g_reintent = true
+g_add_space_for_comma = true
 g_intent_word = '  '
 
 -- parameter for development
@@ -108,6 +109,37 @@ function intent(line)
 end
 
 --[[
+  Add a space after comma if there is no one.
+--]]
+function addSpaceForComma(line)
+  outputTable = {}
+  local i, j = 1, 1
+
+  local cmtLine = string.find(line, '%-%-[^%[][^%[]')
+
+  while true do
+    local cmtStart, cmtEnd = string.find(line, '%-%-%[%[(.-)%]%]')
+    j = string.find(line, ',%S', i)
+    if j == nil then 
+      -- Append remaining string
+      table.insert(outputTable, line:sub(i))
+      break
+    elseif (cmtStart and cmtEnd and j > cmtStart and j < cmtEnd) or 
+           (cmtLine and j > cmtLine) then
+      -- Skip comments
+      table.insert(outputTable, line:sub(i,j))
+    else
+      -- Add a space
+      table.insert(outputTable, line:sub(i,j)..' ')
+    end
+
+    i = j + 1
+  end
+
+  return table.concat(outputTable)
+end
+
+--[[
   Stylize Lua script line by line
 --]]
 function stylizeLuaCode(luaChunk)
@@ -127,6 +159,10 @@ function stylizeLuaCode(luaChunk)
     local currentIntent, laterIntent = intent(line)
 
     intentLevel = intentLevel + currentIntent
+
+    if g_add_space_for_comma then
+      line = addSpaceForComma(line)
+    end
 
     if g_reintent then
       for i=1,intentLevel do
@@ -196,5 +232,8 @@ end
 
 -- Go through every Lua file, well, assuming they are Lua file.
 for i=1,#arg do
-  stylizeLuaFile(arg[i])
+  -- Only process .lua extension
+  if string.find(arg[i], '%.lua$') then
+    stylizeLuaFile(arg[i])
+  end
 end
